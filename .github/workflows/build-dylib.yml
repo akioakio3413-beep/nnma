@@ -1,0 +1,47 @@
+name: Build NmaMod
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "**/*"
+
+jobs:
+  build:
+    runs-on: macos-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build injected dylib
+        run: |
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          xcrun --sdk iphoneos clang++ \
+            -dynamiclib \
+            -fobjc-arc \
+            -fblocks \
+            -std=c++11 \
+            -arch arm64 \
+            -miphoneos-version-min=13.0 \
+            -isysroot "$SDK" \
+            -Wl,-sectcreate,__DATA,__yuji_font,YujiBoku-Regular.ttf \
+            Tweak.mm Images.mm Page.mm Menu.mm MenuItem.mm ToggleItem.mm PageItem.mm SliderItem.mm TextfieldItem.mm InvokeItem.mm \
+            -framework UIKit \
+            -framework Foundation \
+            -framework QuartzCore \
+            -framework CoreGraphics \
+            -o nmamod.dylib
+          codesign -s - nmamod.dylib
+
+      - name: Collect dylib
+        run: |
+          mkdir -p artifact
+          cp nmamod.dylib artifact/nmamod.dylib
+          cp nmamod.plist artifact/nmamod.plist
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nmamod
+          path: artifact/*
