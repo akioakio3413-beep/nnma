@@ -1,0 +1,8 @@
+{
+    Filter =     {
+        Bundles =         (
+            "com.miniclip.agar.io",
+            "com.miniclip.agar.io.2"
+        );
+    };
+}
